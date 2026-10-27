@@ -9,10 +9,10 @@ Made by Grade 7–8 students for ASEP 2026 (theme: *Breaking the Algorithm, Rewr
 
 ## How to run
 
-- **Online:** https://mlink1415.github.io/my-feed-my-mirror/
-- **Offline:** download the whole folder (https://github.com/Mlink1415/my-feed-my-mirror/archive/refs/heads/main.zip), unzip it, and double-click `index.html`. That is all. It works with Wi-Fi turned off.
-- **One file:** `my-feed-my-mirror-offline.html` has everything inside. Copy it to any computer and double-click it.
-- **Guides:** `HUONG-DAN.html` (Vietnamese) and `GUIDE-zh-TW.html` (Traditional Chinese).
+Double-click `index.html`. That is all. It works offline, with Wi-Fi turned off.
+
+- **One file:** `my-feed-my-mirror-offline.html` has everything inside. Copy it (or email it) to any computer and double-click it. Download email attachments first; do not open them in a mail preview window, which cannot run JavaScript.
+- **Guides:** `HUONG-DAN.html` (Vietnamese) and `GUIDE-EN-zh-TW.html` (English + Traditional Chinese, with appendices for checking the zh-TW text).
 
 - Add `?presenter=1` to the address (for example `index.html?presenter=1`) for bigger text and slower animations when screen-recording.
 - Switch language with the **EN | 繁中** button at the top.
