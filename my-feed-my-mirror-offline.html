@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My Feed, My Mirror</title>
+  <style>
+/* style.css: all the looks. System fonts only, no downloads. */
+:root {
+  --bg: #f4f1ff; --ink: #1f1b3a; --muted: #5b5778; --card: #ffffff; --line: #d9d3f2;
+  --accent: #5b3fd1; --accent-ink: #ffffff;
+  --appearance: #d6408a; --hobbies: #e07b12; --learning: #2f7fd0; --friends: #2a9a64; --fun: #7f56d9;
+  --t: .35s;                       /* animation speed (slower in presenter mode) */
+  font-size: 18px;
+}
+/* presenter mode: the class sits on <html>, so every rem size grows */
+.presenter { font-size: 24px; --t: .9s; }
+@media (prefers-reduced-motion: reduce) { :root, .presenter { --t: 0s; } }
+
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: system-ui, -apple-system, "Segoe UI", "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+  line-height: 1.4;
+}
+button { font: inherit; color: inherit; cursor: pointer; min-height: 44px; }
+button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* ---- top bar ---- */
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: .75rem; flex-wrap: wrap;
+  padding: .5rem 1rem; background: var(--card); border-bottom: 2px solid var(--line); }
+.brand { font-weight: 800; font-size: 1.1rem; }
+.tools { display: flex; gap: .75rem; align-items: center; }
+.seg { display: inline-flex; border: 2px solid var(--accent); border-radius: 999px; overflow: hidden; }
+.seg button { border: 0; background: transparent; padding: 0 .9rem; font-weight: 700; color: var(--accent); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.ghost { border: 2px solid var(--line); background: var(--card); border-radius: 999px; padding: 0 1rem; font-weight: 700; }
+
+/* ---- start screen ---- */
+.start { max-width: 35rem; margin: 0 auto; padding: 2.5rem 1rem; text-align: center; }
+.hero { font-size: 4rem; }
+.start h1 { font-size: 2.2rem; margin: .25rem 0; }
+.start .sub { font-size: 1.3rem; color: var(--accent); font-weight: 700; margin: 0 0 1.25rem; }
+.start p { margin: .25rem 0; font-size: 1.1rem; }
+.big { margin-top: 1.5rem; min-height: 56px; padding: 0 2.5rem; border: 0; border-radius: 999px;
+  background: var(--accent); color: var(--accent-ink); font-size: 1.2rem; font-weight: 800; }
+
+/* ---- feed screen ---- */
+.stage { display: flex; gap: 1.5rem; justify-content: center; align-items: flex-start; flex-wrap: wrap; padding: 1rem; }
+.phone { width: min(100%, 22.2rem); background: var(--card); border: 3px solid var(--ink); border-radius: 28px; padding: .75rem; }
+.flip { perspective: 1200px; height: 18.9rem; }
+.flip-inner { position: relative; width: 100%; height: 100%; transition: transform var(--t); transform-style: preserve-3d; }
+.flip.flipped .flip-inner { transform: rotateY(180deg); }
+.face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  display: flex; flex-direction: column; gap: .4rem; overflow: auto; }
+.back { transform: rotateY(180deg); background: #fff8e6; border: 2px dashed #c98a00; border-radius: 16px; padding: .9rem; }
+.back h3 { margin: 0; }
+.back ul { margin: .25rem 0; padding-left: 1.2rem; }
+.head { display: flex; align-items: center; gap: .6rem; font-weight: 800; }
+.avatar { width: 2.4rem; height: 2.4rem; border-radius: 50%; background: var(--line); display: grid; place-items: center; font-size: 1.4rem; }
+.visual { flex: 1; min-height: 110px; display: grid; place-items: center; font-size: 3.6rem; border-radius: 16px; }
+.caption { font-size: 1.05rem; font-weight: 600; }
+.likes { color: var(--muted); font-size: .9rem; }
+.links { display: flex; gap: .5rem; flex-wrap: wrap; }
+.link { background: none; border: 0; padding: 0 .25rem; color: var(--accent); text-decoration: underline; font-weight: 700; font-size: .95rem; }
+
+.actions { display: grid; grid-template-columns: repeat(5, 1fr); gap: .35rem; margin-top: .6rem; }
+.act { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .1rem;
+  min-height: 3.6rem; padding: .25rem; border: 2px solid var(--line); border-radius: 14px; background: var(--card); }
+.act:hover { border-color: var(--accent); }
+.act .em { font-size: 1.5rem; }
+.act .lb { font-size: .72rem; font-weight: 700; text-align: center; line-height: 1.1; }
+
+.side { width: min(100%, 18.9rem); }
+.panel { background: var(--card); border: 2px solid var(--line); border-radius: 16px; padding: 1rem; margin-bottom: 1rem; }
+.panel h2 { font-size: 1rem; margin: 0 0 .6rem; }
+.mrow { display: grid; grid-template-columns: 1fr 3rem; gap: .1rem .5rem; margin-bottom: .55rem; font-size: .85rem; font-weight: 700; }
+.mpct { text-align: right; }
+.track { grid-column: 1 / -1; height: 14px; background: #ece8fb; border-radius: 999px; overflow: hidden; }
+.fill { height: 100%; width: 0; border-radius: 999px; transition: width var(--t); }
+.disclaimer { font-size: .85rem; color: var(--muted); margin: 0; }
+.counter { font-size: .9rem; color: var(--muted); margin: 0 0 1rem; }
+
+/* topic colours (the label is always written too, so colour is never the only clue) */
+.tp-appearance { background: var(--appearance); } .tp-hobbies { background: var(--hobbies); }
+.tp-learning { background: var(--learning); }     .tp-friends { background: var(--friends); }
+.tp-fun { background: var(--fun); }
+.visual.tp-appearance { background: #fde3f0; } .visual.tp-hobbies { background: #ffeed8; }
+.visual.tp-learning { background: #dcecff; }   .visual.tp-friends { background: #d9f5e6; }
+.visual.tp-fun { background: #ebe1ff; }
+
+/* ---- "Why am I seeing this?" pop-up ---- */
+.backdrop { position: fixed; inset: 0; background: rgba(31, 27, 58, .55); display: grid; place-items: center; padding: 1rem; z-index: 10; }
+.dialog { background: var(--card); border-radius: 20px; padding: 1.25rem; width: min(100%, 25.5rem); max-height: 90vh; overflow: auto; }
+.dialog h2 { margin: 0 0 .5rem; }
+.dialog li { margin-bottom: .5rem; }
+.dialog .note { color: var(--muted); font-size: .9rem; }
+
+@media (max-width: 860px) { .flip { height: 17.8rem; } }
+
+/* ---- Mirror Check, Rewrite Challenge result, End ---- */
+.page { max-width: 35rem; margin: 0 auto; padding: 1.5rem 1rem 2.5rem; text-align: center; }
+.page h1 { font-size: 1.8rem; margin: .25rem 0 1rem; }
+.page .panel { text-align: left; }
+.page .hero { font-size: 4rem; }
+.btn { min-height: 48px; padding: 0 1.5rem; border: 0; border-radius: 999px; background: var(--accent); color: var(--accent-ink); font-weight: 800; margin: 0 0 1rem; }
+.row { display: flex; gap: .75rem; justify-content: center; flex-wrap: wrap; margin-top: 1rem; }
+.row .btn { margin: 0; }
+.goal p { margin: 0; font-size: .95rem; }
+.mirror-frame { border: 8px double var(--muted); border-radius: 28px; background: #eef3ff; padding: 1.25rem 1rem; margin-bottom: 1rem; }
+.mirror-frame p { margin: 0; }
+.mirror-topic { font-size: 1.9rem; font-weight: 800; margin-top: .4rem !important; }
+.question { font-size: 1.25rem; font-weight: 800; margin: 1rem 0 .25rem; }
+.qs { list-style: none; padding: 0; margin: 0 0 .75rem; color: var(--muted); font-style: italic; }
+.result-label { margin: 0; color: var(--muted); font-weight: 700; }
+.result-code { margin: 0 0 1rem; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 3.6rem; font-weight: 800; letter-spacing: .05em; }
+.teaser { background: #fff8e6; border: 2px dashed #c98a00; border-radius: 16px; padding: 1rem; font-weight: 700; margin: 1rem 0; }
+.tint-appearance { background: #fde3f0; border-color: var(--appearance); } .tint-hobbies { background: #ffeed8; border-color: var(--hobbies); }
+.tint-learning { background: #dcecff; border-color: var(--learning); }   .tint-friends { background: #d9f5e6; border-color: var(--friends); }
+.tint-fun { background: #ebe1ff; border-color: var(--fun); }
+
+h1:focus { outline: none; }
+
+/* ---- Learn cards ---- */
+.big.alt { background: var(--card); color: var(--accent); border: 3px solid var(--accent); }
+.start .row { gap: 1rem; }
+.start .row .big { margin-top: 1.5rem; }
+.learn { max-width: 40rem; }
+.step { margin: 0 0 .5rem; color: var(--muted); font-weight: 700; font-size: .9rem; }
+.learn-card { background: var(--card); border: 2px solid var(--line); border-radius: 20px; padding: 1.25rem 1.25rem 1rem; text-align: left;
+  touch-action: pan-y; animation: slidein var(--t) ease-out; }
+.learn-card h1 { margin: .1rem 0 .5rem; font-size: 1.6rem; text-align: left; }
+.learn-card p { margin: .5rem 0; font-size: 1.08rem; }
+.lemoji { font-size: 3rem; }
+.ours { background: #eef3ff; border-radius: 12px; padding: .5rem .75rem; font-size: .95rem !important; font-weight: 600; }
+.src { color: var(--muted); font-size: .8rem !important; margin-top: 1rem !important; border-top: 1px solid var(--line); padding-top: .5rem; }
+.clist { margin: .25rem 0; padding-left: 1.2rem; font-size: 1.05rem; } .clist li { margin-bottom: .35rem; }
+.bigq { font-size: 1.2rem; font-weight: 800; color: var(--ink); font-style: normal; text-align: left; padding-left: 1.2rem; list-style: disc; }
+.habit { display: inline-block; background: var(--accent); color: var(--accent-ink); border-radius: 999px; padding: .4rem 1.2rem; font-weight: 800; }
+.dots { display: flex; gap: .5rem; justify-content: center; margin: 1rem 0 0; }
+.dot { width: 12px; height: 12px; border-radius: 50%; background: var(--line); } .dot.on { background: var(--accent); }
+@keyframes slidein { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
+
+/* The loop lights up one step at a time, then starts again (slower in presenter mode). */
+.loop { --loop: calc(var(--t) * 28); list-style: none; display: flex; flex-wrap: wrap; gap: .5rem; padding: 0; margin: 1rem 0; align-items: stretch; }
+.loop li { flex: 1 1 110px; background: var(--card); border: 2px solid var(--line); border-radius: 14px; padding: .6rem; text-align: center;
+  font-weight: 700; font-size: .9rem; position: relative; animation: lit var(--loop) infinite; animation-delay: calc(var(--loop) / 5 * var(--i)); }
+.loop li::after { content: "→"; position: absolute; right: -.6rem; top: 50%; transform: translateY(-50%); font-weight: 800; color: var(--accent); background: var(--bg); line-height: 1; z-index: 1; }
+.loop li:last-child::after { content: "↻"; }
+@keyframes lit { 0% { background: #ffe9a8; border-color: #c98a00; transform: scale(1.05); } 16% { background: #ffe9a8; border-color: #c98a00; transform: scale(1.05); } 20%, 100% { background: var(--card); border-color: var(--line); transform: none; } }
+@media (prefers-reduced-motion: reduce) { .loop li, .learn-card { animation: none; } }
+.learn .row { margin-bottom: 1.25rem; } .learn .disclaimer { margin-top: .4rem; }
+
+/* Mirror Check: two columns on wide screens so the buttons fit on one screen */
+.page.wide { max-width: 53rem; }
+.mirror-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; align-items: start; }
+.mirror-grid .panel { margin-bottom: 0; }
+@media (max-width: 860px) { .mirror-grid { grid-template-columns: 1fr; } }
+
+</style>
+</head>
+<body>
+  <header id="topbar" class="topbar"></header>
+  <main id="app"></main>
+  <noscript><p style="padding:1rem">Please turn on JavaScript. 請開啟 JavaScript。</p></noscript>
+
+  <!-- One-file offline copy: CSS and all JS are inside this file. Built from index.html. -->
+  <script>
+// ---- js/i18n.js ----
+// i18n.js: every word the app shows, in English and Traditional Chinese (zh-TW).
+// zh-TW draft: must be checked by our Taiwanese teammates
+(function (root) {
+  'use strict';
+
+  root.MFMM_I18N = {
+    en: {
+      'app': 'My Feed, My Mirror',
+      'subtitle': 'Who Am I Beyond the Likes?',
+      'start.line1': 'No login. Nothing is saved.',
+      'start.line2': 'Everything here is made up for learning.',
+      'btn.play': 'Play',
+      'btn.restart': 'Restart',
+      'lang.label': 'Language',
+      'disclaimer': 'This is a simplified teaching model made by students. It is NOT the real algorithm of any app.',
+
+      'act.watch': 'Keep watching',
+      'act.like': 'Like',
+      'act.share': 'Share',
+      'act.skip': 'Skip',
+      'act.notInterested': 'Not interested',
+      'link.why': 'Why am I seeing this?',
+      'link.behind': 'Behind the post',
+      'likes': '{n} likes',
+
+      'topic.appearance': 'Appearance & Comparison',
+      'topic.hobbies': 'Sports, Music & Art',
+      'topic.learning': 'Science & Learning',
+      'topic.friends': 'Friends & Kindness',
+      'topic.fun': 'Pets & Funny',
+
+      'meter.title': 'Your feed mix (last 10 posts)',
+      'counter': 'Actions so far: {n}',
+
+      'behind.intro': 'What may be hidden behind this post:',
+      'behind.nothing': 'Nothing hidden: this one is just fun 🙂',
+      'behind.back': 'Back to the post',
+
+      'why.title': 'Why am I seeing this?',
+      'why.note': 'These are the exact reasons our teaching model used.',
+      'btn.close': 'Close',
+
+      'r.watch': 'You watched {n} {topic} {posts} for a long time ({pts})',
+      'r.like': 'You liked {n} {topic} {posts} ({pts})',
+      'r.share': 'You shared {n} {topic} {posts} ({pts})',
+      'r.skip': 'You skipped {n} {topic} {posts} ({pts})',
+      'r.notInterested': 'You said “Not interested” to {n} {topic} {posts} ({pts})',
+      'r.popular': 'This post is very popular ({pts})',
+      'r.explore': 'Explore pick: you haven’t seen much {topic}',
+      'r.div.creator': 'Diversity rule: a higher-scoring post was skipped because the last post was by the same creator.',
+      'r.div.topic': 'Diversity rule: a higher-scoring {topic} post was skipped because the last posts were also {topic}.',
+      'r.chance': 'Nothing you did points here yet, so it was picked by popularity and a little chance.',
+
+      'btn.mirror': 'Mirror Check',
+      'mirror.title': 'Mirror Check',
+      'mirror.care': 'Your feed thinks you care most about:',
+      'mirror.unknown': 'Your feed doesn’t know yet. Keep playing!',
+      'mirror.question': 'Is this the real you, or just what you stopped on?',
+      'mirror.q1': 'Why do I like this?',
+      'mirror.q2': 'Is what I see really everything?',
+      'mirror.source': 'Questions from a Taiwan Ministry of Education media-literacy lesson. Source: K-12 Education Administration news (26 Oct 2026).',
+      'btn.challenge': 'Try the Rewrite Challenge',
+      'btn.keep': 'Keep playing',
+
+      'ch.title': 'Rewrite Challenge',
+      'ch.goal': 'Your feed has drifted toward appearance and comparison. In {n} actions, make the next 10 posts have no more than {a}% Appearance, and at least {k} topics with {m}% or more each.',
+      'ch.counter': 'Actions: {n} / {max}',
+      'ch.check': 'Check my feed now',
+      'res.win': 'You rewrote your feed in {n} actions! 🎉',
+      'res.try': 'Not yet. Try using “Not interested” and Explore on purpose.',
+      'res.code': 'Result code',
+      'res.next': 'The next 10 posts would be:',
+      'btn.again': 'Try again',
+      'btn.finish': 'Finish',
+
+      'end.line': 'The algorithm is a mirror of what we stop on. You can choose what you stop on.',
+      'end.teaser': 'Real Me Break: try today’s club activity at school!',
+      'btn.playagain': 'Play again',
+
+      'btn.learn': 'Learn first',
+      'btn.next': 'Next',
+      'btn.back': 'Back',
+      'btn.toplay': 'Play',
+      'learn.title': 'How does a feed decide?',
+      'learn.step': 'Card {n} of {total}',
+      'learn.note': 'Platform descriptions are what the companies say about themselves. They may be simplified and may have changed since they were published.',
+      'source.label': 'Source:',
+
+      'learn.1.title': 'Signals',
+      'learn.1.body': 'Apps say they look at many small clues, called signals. Examples they name: what you like, share and comment on, how long you watch, and your watch and search history. A strong signal, like watching a long video to the end, counts more than a weak one.',
+      'learn.1.ours': 'In our game: Watch +{w}, Like +{l}, Share +{s}, Skip {k}, Not interested {x}.',
+      'learn.2.title': 'Predictions',
+      'learn.2.body': 'Instagram says there is no single algorithm. Feed, Stories, Explore and Reels each rank posts in their own way. In Feed, it looks most closely at how likely you are to spend a few seconds on a post, like, comment, share, or tap the profile.',
+      'learn.3.title': 'The Loop',
+      'learn.3.body': 'Each time you stop on a post, the app learns a signal and shows you more like it. Then you see more of it, and you stop again. A Taiwan Ministry of Education lesson says algorithms and business models can influence what we like and choose.',
+      'learn.3.ours': 'The loop picture is our own simplified drawing.',
+      'loop.1': 'You stop on a post',
+      'loop.2': 'The app learns a signal',
+      'loop.3': 'It shows more like it',
+      'loop.4': 'You see more of it',
+      'loop.5': 'You stop again',
+      'learn.4.title': 'Built-in variety',
+      'learn.4.body': 'Instagram says it tries not to show too many posts from the same person in a row. TikTok says it generally avoids two videos in a row with the same sound or creator. TikTok also names the “filter bubble” risk and says it mixes in different videos.',
+      'learn.4.ours': 'In our game: this is the diversity rule and the Explore pick.',
+      'learn.5.title': 'Your controls',
+      'learn.5.intro': 'Apps say you can:',
+      'learn.5.i1': 'Tap “Not interested” (Instagram, TikTok)',
+      'learn.5.i2': 'Hide a creator or a sound (TikTok)',
+      'learn.5.i3': 'Snooze suggested posts, or mute or unfollow (Instagram)',
+      'learn.5.i4': 'Ask “Why you’re seeing this post” (Instagram)',
+      'learn.5.i5': 'Remove recommendations, or pause or clear your watch and search history (YouTube)',
+      'learn.6.title': 'Think like a media detective',
+      'learn.6.intro': 'Ask yourself two questions:',
+      'learn.6.habit': 'Stop · Check · Ask for help',
+      'learn.6.habit.body': 'When you meet a rumour, a suspicious message or an AI-made picture: stop, check the source, notice the risk, and ask a trusted person for help.'
+    },
+
+    'zh-TW': {
+      'app': '我的動態，我的鏡子',
+      'subtitle': '除了按讚，我是誰？',
+      'start.line1': '不用登入，什麼都不會被儲存。',
+      'start.line2': '這裡的一切都是為了學習而編的。',
+      'btn.play': '開始玩',
+      'btn.restart': '重新開始',
+      'lang.label': '語言',
+      'disclaimer': '這是學生製作的簡化教學模型，不是任何應用程式真正的演算法。',
+
+      'act.watch': '繼續看',
+      'act.like': '按讚',
+      'act.share': '分享',
+      'act.skip': '略過',
+      'act.notInterested': '不感興趣',
+      'link.why': '為什麼我會看到這個？',
+      'link.behind': '貼文背後',
+      'likes': '{n} 個讚',
+
+      'topic.appearance': '外表與比較',
+      'topic.hobbies': '運動、音樂與藝術',
+      'topic.learning': '科學與學習',
+      'topic.friends': '朋友與善意',
+      'topic.fun': '寵物與搞笑',
+
+      'meter.title': '你的動態組合（最近 10 則）',
+      'counter': '目前動作：{n}',
+
+      'behind.intro': '這則貼文背後可能藏著：',
+      'behind.nothing': '沒有隱藏的東西：這則就只是好玩 🙂',
+      'behind.back': '回到貼文',
+
+      'why.title': '為什麼我會看到這個？',
+      'why.note': '這些是我們的教學模型實際用到的理由。',
+      'btn.close': '關閉',
+
+      'r.watch': '你長時間觀看了 {n} 則「{topic}」貼文（{pts}）',
+      'r.like': '你對 {n} 則「{topic}」貼文按了讚（{pts}）',
+      'r.share': '你分享了 {n} 則「{topic}」貼文（{pts}）',
+      'r.skip': '你略過了 {n} 則「{topic}」貼文（{pts}）',
+      'r.notInterested': '你對 {n} 則「{topic}」貼文選了「不感興趣」（{pts}）',
+      'r.popular': '這則貼文非常熱門（{pts}）',
+      'r.explore': '探索推薦：你還沒看過太多「{topic}」',
+      'r.div.creator': '多樣性規則：因為上一則是同一位創作者，所以先跳過了分數更高的貼文。',
+      'r.div.topic': '多樣性規則：因為前面幾則也是「{topic}」，所以先跳過了分數更高的貼文。',
+      'r.chance': '你還沒有做任何動作指向這裡，所以是依熱門程度和一點機率選出來的。',
+
+      'btn.mirror': '鏡子檢查',
+      'mirror.title': '鏡子檢查',
+      'mirror.care': '你的動態認為你最在意：',
+      'mirror.unknown': '你的動態還不知道，再多玩一下吧！',
+      'mirror.question': '這是真正的你，還是只是你停下來看的東西？',
+      'mirror.q1': '我為什麼會喜歡這個？',
+      'mirror.q2': '我看到的真的是全部嗎？',
+      'mirror.source': '這兩個問題來自臺灣教育部的媒體素養課程。來源：國民及學前教育署新聞（2026 年 10 月 26 日）。',
+      'btn.challenge': '挑戰重寫我的動態',
+      'btn.keep': '繼續玩',
+
+      'ch.title': '重寫挑戰',
+      'ch.goal': '你的動態偏向外表與比較。請在 {n} 個動作內，讓接下來 10 則貼文中「外表與比較」不超過 {a}%，而且至少有 {k} 個主題各占 {m}% 以上。',
+      'ch.counter': '動作：{n} / {max}',
+      'ch.check': '現在檢查我的動態',
+      'res.win': '你用了 {n} 個動作就重寫了你的動態！🎉',
+      'res.try': '還沒成功。試著故意多用「不感興趣」和探索看看。',
+      'res.code': '結果代碼',
+      'res.next': '接下來的 10 則貼文會是：',
+      'btn.again': '再試一次',
+      'btn.finish': '完成',
+
+      'end.line': '演算法是我們停下來看的東西的鏡子。你可以選擇自己要停在哪裡。',
+      'end.teaser': '「真實的我」休息站：來試試今天學校社團的活動！',
+      'btn.playagain': '再玩一次',
+
+      'btn.learn': '先學習',
+      'btn.next': '下一張',
+      'btn.back': '上一張',
+      'btn.toplay': '開始玩',
+      'learn.title': '動態是怎麼決定的？',
+      'learn.step': '第 {n} 張，共 {total} 張',
+      'learn.note': '各平台的說明是這些公司對自己的描述，可能已經簡化，也可能在發布後有所改變。',
+      'source.label': '來源：',
+
+      'learn.1.title': '訊號',
+      'learn.1.body': '各個應用程式說，它們會看很多小線索，叫做「訊號」。它們提到的例子有：你按讚、分享、留言的內容，你看了多久，還有你的觀看和搜尋紀錄。像把長影片看到最後這種強訊號，比弱訊號更重要。',
+      'learn.1.ours': '在我們的遊戲裡：繼續看 +{w}、按讚 +{l}、分享 +{s}、略過 {k}、不感興趣 {x}。',
+      'learn.2.title': '預測',
+      'learn.2.body': 'Instagram 說，並沒有單一的演算法。動態消息、限時動態、探索和 Reels 各有自己的排序方式。在動態消息裡，它最仔細看的是：你有多可能多看幾秒、按讚、留言、分享，或點進個人檔案。',
+      'learn.3.title': '循環',
+      'learn.3.body': '每次你停在一則貼文上，應用程式就學到一個訊號，並給你看更多類似的。然後你看到更多，又再停下來。臺灣教育部的一堂課說，演算法和商業模式會影響我們喜歡和選擇什麼。',
+      'learn.3.ours': '這個循環圖是我們自己畫的簡化版。',
+      'loop.1': '你停在一則貼文上',
+      'loop.2': '應用程式學到一個訊號',
+      'loop.3': '它顯示更多類似的',
+      'loop.4': '你看到更多',
+      'loop.5': '你又停下來',
+      'learn.4.title': '內建的多樣性',
+      'learn.4.body': 'Instagram 說，它會盡量不連續顯示太多同一個人的貼文。TikTok 說，它通常會避免連續兩支影片用同一個音樂或來自同一位創作者。TikTok 也提到「過濾氣泡」的風險，並說它會混入不同的影片。',
+      'learn.4.ours': '在我們的遊戲裡：這就是多樣性規則和探索推薦。',
+      'learn.5.title': '你的控制選項',
+      'learn.5.intro': '各個應用程式說，你可以：',
+      'learn.5.i1': '點「不感興趣」（Instagram、TikTok）',
+      'learn.5.i2': '隱藏某位創作者或某個音樂（TikTok）',
+      'learn.5.i3': '暫停推薦貼文，或是靜音、取消追蹤（Instagram）',
+      'learn.5.i4': '查看「為什麼你會看到這則貼文」（Instagram）',
+      'learn.5.i5': '移除推薦，或暫停、清除觀看和搜尋紀錄（YouTube）',
+      'learn.6.title': '像媒體偵探一樣思考',
+      'learn.6.intro': '問自己兩個問題：',
+      'learn.6.habit': '停一下 · 查一查 · 找人幫忙',
+      'learn.6.habit.body': '遇到謠言、可疑訊息或 AI 生成的圖片時：先停下來，查證來源，留意風險，再請信任的人幫忙。'
+    }
+  };
+})(typeof window !== 'undefined' ? window : this);
+
+</script>
+  <script>
+// ---- js/content.js ----
+// content.js: all the FICTIONAL posts. Nobody here is real. No photos, no real brands.
+// zh-TW draft: must be checked by our Taiwanese teammates
+//
+// Each post: id, topic, creator, avatarEmoji, visual (emoji), caption{en, zh-TW},
+// likes, veryPopular, behind[{en, zh-TW}].
+// An EMPTY behind list means "Nothing hidden: this one is just fun 🙂" (the app shows that line).
+(function (root) {
+  'use strict';
+
+  // Reusable "Behind the post" facts (only these kinds are allowed).
+  var B = {
+    filter:   { en: 'A beauty filter was switched on.', 'zh-TW': '有開美顏濾鏡。' },
+    edited:   { en: 'The picture was edited to look smoother.', 'zh-TW': '照片有修圖，看起來更平滑。' },
+    retakes:  { en: 'This is the best of many retakes.', 'zh-TW': '這是重拍很多次之後挑出來最好的一張。' },
+    light:    { en: 'Good lighting and a carefully chosen angle.', 'zh-TW': '光線很好，角度也是特別挑過的。' },
+    ad:       { en: 'Paid promotion: this post is an ad.', 'zh-TW': '付費推廣：這是一則廣告。' },
+    ai:       { en: 'The image was made by AI.', 'zh-TW': '這張圖是 AI 生成的。' },
+    cutVideo: { en: 'The boring waiting parts were cut out.', 'zh-TW': '無聊的等待時間被剪掉了。' },
+    sound:    { en: 'A funny sound effect was added.', 'zh-TW': '後來加上了搞笑音效。' },
+    tries:    { en: 'It took many tries. We only show the one that worked.', 'zh-TW': '試了很多次，這裡只放成功的那一次。' }
+  };
+
+  var POSTS = [
+    // ---- Appearance & Comparison (about half have 2-3 behind facts) ----
+    { id: 'ap01', topic: 'appearance', creator: 'LunaGlow', avatarEmoji: '🌙', visual: '🤳✨',
+      caption: { en: 'Filter selfie ✨', 'zh-TW': '濾鏡自拍 ✨' },
+      likes: 120000, veryPopular: true, behind: [B.filter, B.retakes, B.light] },
+    { id: 'ap02', topic: 'appearance', creator: 'StyleSprout', avatarEmoji: '🌱', visual: '👗🧥',
+      caption: { en: 'Outfit check (take #47)', 'zh-TW': '今日穿搭（第 47 次重拍）' },
+      likes: 85000, veryPopular: false, behind: [B.retakes, B.light] },
+    { id: 'ap03', topic: 'appearance', creator: 'GlowGarden', avatarEmoji: '🌼', visual: '🪞🌸',
+      caption: { en: 'Getting ready with me: my “natural” look 🌸', 'zh-TW': '一起準備出門：我的「自然」造型 🌸' },
+      likes: 47000, veryPopular: false, behind: [B.ad, B.retakes, B.light] },
+    { id: 'ap04', topic: 'appearance', creator: 'LunaGlow', avatarEmoji: '🌙', visual: '💇✨',
+      caption: { en: 'Perfect hair day', 'zh-TW': '完美髮型日' },
+      likes: 64000, veryPopular: true, behind: [B.light] },
+    { id: 'ap05', topic: 'appearance', creator: 'StyleSprout', avatarEmoji: '🌱', visual: '👟👟',
+      caption: { en: 'New sneakers! Who has the best pair? 👟', 'zh-TW': '新球鞋！誰的鞋子最好看？👟' },
+      likes: 40000, veryPopular: false, behind: [B.ad] },
+    { id: 'ap06', topic: 'appearance', creator: 'PoseParade', avatarEmoji: '📸', visual: '📸🌟',
+      caption: { en: 'Photo dump: my best angle 📸', 'zh-TW': '照片大放送：我最好看的角度 📸' },
+      likes: 52000, veryPopular: true, behind: [B.retakes, B.light, B.edited] },
+    { id: 'ap07', topic: 'appearance', creator: 'PoseParade', avatarEmoji: '📸', visual: '👯🎀',
+      caption: { en: 'Matching outfits with my best friend', 'zh-TW': '和好朋友穿一樣的衣服' },
+      likes: 18000, veryPopular: false, behind: [B.light] },
+    { id: 'ap08', topic: 'appearance', creator: 'GlowGarden', avatarEmoji: '🌼', visual: '🛏️💫',
+      caption: { en: 'My dream room makeover ✨', 'zh-TW': '我的夢想房間大改造 ✨' },
+      likes: 31000, veryPopular: false, behind: [B.ai, B.ad] },
+
+    // ---- Sports, Music & Art ----
+    { id: 'ho01', topic: 'hobbies', creator: 'BeatBuddy', avatarEmoji: '🥁', visual: '🥁🎶',
+      caption: { en: 'Drum practice: I kept the beat for the whole song!', 'zh-TW': '練鼓成功：整首歌我都打對拍子了！' },
+      likes: 2300, veryPopular: false, behind: [] },
+    { id: 'ho02', topic: 'hobbies', creator: 'SketchFox', avatarEmoji: '🦊', visual: '🎨🌅',
+      caption: { en: 'I painted a sunset with only three colors', 'zh-TW': '我只用三種顏色畫了一幅夕陽' },
+      likes: 4100, veryPopular: true, behind: [] },
+    { id: 'ho03', topic: 'hobbies', creator: 'BeatBuddy', avatarEmoji: '🥁', visual: '🎸🎵',
+      caption: { en: 'Learning guitar: my first three chords, G, C and D', 'zh-TW': '學吉他：我的前三個和弦，G、C 和 D' },
+      likes: 1500, veryPopular: false, behind: [] },
+    { id: 'ho04', topic: 'hobbies', creator: 'KickCloud', avatarEmoji: '⚽', visual: '⚽🥅',
+      caption: { en: 'I practiced penalty kicks every day this week', 'zh-TW': '這個星期我每天都練習罰球' },
+      likes: 3600, veryPopular: false, behind: [] },
+    { id: 'ho05', topic: 'hobbies', creator: 'SketchFox', avatarEmoji: '🦊', visual: '🐉🧱',
+      caption: { en: 'A clay dragon, made in three evenings', 'zh-TW': '黏土小龍，花了三個晚上做成' },
+      likes: 7200, veryPopular: true, behind: [] },
+    { id: 'ho06', topic: 'hobbies', creator: 'SwimSprite', avatarEmoji: '🏊', visual: '🏊💦',
+      caption: { en: 'I swam one more lap than yesterday', 'zh-TW': '我今天比昨天多游了一圈' },
+      likes: 2100, veryPopular: false, behind: [] },
+    { id: 'ho07', topic: 'hobbies', creator: 'SongSeed', avatarEmoji: '🎤', visual: '🎤🎶',
+      caption: { en: 'Our class choir is ready for the school show', 'zh-TW': '我們班的合唱團準備好表演了' },
+      likes: 4800, veryPopular: false, behind: [] },
+    { id: 'ho08', topic: 'hobbies', creator: 'KickCloud', avatarEmoji: '⚽', visual: '🛴💨',
+      caption: { en: 'Scooter trick: I tried 20 times and landed it once!', 'zh-TW': '滑板車特技：試了 20 次，成功 1 次！' },
+      likes: 5500, veryPopular: false, behind: [B.tries] },
+
+    // ---- Science & Learning ----
+    { id: 'le01', topic: 'learning', creator: 'LabLily', avatarEmoji: '🔬', visual: '🍋💡',
+      caption: { en: 'Can a lemon light up a tiny bulb? Let’s test it!', 'zh-TW': '檸檬可以點亮小燈泡嗎？一起來實驗！' },
+      likes: 6800, veryPopular: true, behind: [B.cutVideo] },
+    { id: 'le02', topic: 'learning', creator: 'NumberNinja', avatarEmoji: '🧮', visual: '🔢✖️',
+      caption: { en: 'Math trick: multiply by 11 in your head', 'zh-TW': '數學小技巧：用心算乘以 11' },
+      likes: 1900, veryPopular: false, behind: [] },
+    { id: 'le03', topic: 'learning', creator: 'LabLily', avatarEmoji: '🔬', visual: '🔦🌌',
+      caption: { en: 'Why is the sky blue? A flashlight experiment', 'zh-TW': '天空為什麼是藍色的？手電筒小實驗' },
+      likes: 5400, veryPopular: true, behind: [] },
+    { id: 'le04', topic: 'learning', creator: 'StarScout', avatarEmoji: '🔭', visual: '🔭🪐',
+      caption: { en: 'I spotted Jupiter’s moons with binoculars', 'zh-TW': '我用望遠鏡看到了木星的衛星' },
+      likes: 3100, veryPopular: false, behind: [] },
+    { id: 'le05', topic: 'learning', creator: 'NumberNinja', avatarEmoji: '🧮', visual: '🗣️📚',
+      caption: { en: 'Learn 10 new words in a new language today', 'zh-TW': '今天來學 10 個新語言的單字' },
+      likes: 2500, veryPopular: false, behind: [] },
+    { id: 'le06', topic: 'learning', creator: 'PlantPal', avatarEmoji: '🌱', visual: '🌱📓',
+      caption: { en: 'Bean sprout diary: day 1 to day 7', 'zh-TW': '豆芽日記：第 1 天到第 7 天' },
+      likes: 4300, veryPopular: false, behind: [B.cutVideo] },
+    { id: 'le07', topic: 'learning', creator: 'StarScout', avatarEmoji: '🔭', visual: '✈️📄',
+      caption: { en: 'How do planes stay up? A paper-plane test', 'zh-TW': '飛機為什麼飛得起來？紙飛機實驗' },
+      likes: 8200, veryPopular: true, behind: [] },
+    { id: 'le08', topic: 'learning', creator: 'CodeCub', avatarEmoji: '💻', visual: '💻🎲',
+      caption: { en: 'My first tiny program: a dice roller', 'zh-TW': '我的第一個小程式：擲骰子' },
+      likes: 3900, veryPopular: false, behind: [] },
+
+    // ---- Friends & Kindness (real-life kindness, links to our "Real Me Breaks") ----
+    { id: 'fr01', topic: 'friends', creator: 'KindKite', avatarEmoji: '🪁', visual: '🤝🎲',
+      caption: { en: 'I invited the new classmate to join our game at break', 'zh-TW': '下課時我邀請新同學一起玩我們的遊戲' },
+      likes: 3200, veryPopular: false, behind: [] },
+    { id: 'fr02', topic: 'friends', creator: 'TeamTiger', avatarEmoji: '🐯', visual: '🏀👏',
+      caption: { en: 'Team practice: we cheered for everyone, even after a miss', 'zh-TW': '團隊練習：就算投不進，我們也為每個人加油' },
+      likes: 5200, veryPopular: true, behind: [] },
+    { id: 'fr03', topic: 'friends', creator: 'KindKite', avatarEmoji: '🪁', visual: '📒🤒',
+      caption: { en: 'I shared my notes with a classmate who was sick', 'zh-TW': '我把筆記分享給生病請假的同學' },
+      likes: 2800, veryPopular: false, behind: [] },
+    { id: 'fr04', topic: 'friends', creator: 'HelperHen', avatarEmoji: '🐔', visual: '📦💪',
+      caption: { en: 'We carried the big box together for our teacher', 'zh-TW': '我們一起幫老師搬大箱子' },
+      likes: 1700, veryPopular: false, behind: [] },
+    { id: 'fr05', topic: 'friends', creator: 'TeamTiger', avatarEmoji: '🐯', visual: '💌🌈',
+      caption: { en: 'Our club made welcome cards for new students', 'zh-TW': '我們社團幫新同學做了歡迎卡片' },
+      likes: 4600, veryPopular: true, behind: [] },
+    { id: 'fr06', topic: 'friends', creator: 'HelperHen', avatarEmoji: '🐔', visual: '🫶😄',
+      caption: { en: 'I said sorry first after an argument, and we laughed again', 'zh-TW': '吵架後我先說了對不起，我們又一起笑了' },
+      likes: 3300, veryPopular: false, behind: [] },
+    { id: 'fr07', topic: 'friends', creator: 'InviteOwl', avatarEmoji: '🦉', visual: '🍱🪑',
+      caption: { en: 'I asked a quiet classmate to join our lunch table', 'zh-TW': '我邀請安靜的同學一起坐我們的午餐桌' },
+      likes: 5900, veryPopular: true, behind: [] },
+    { id: 'fr08', topic: 'friends', creator: 'InviteOwl', avatarEmoji: '🦉', visual: '🧤🌳',
+      caption: { en: 'Clean-up day: everyone picked up litter together', 'zh-TW': '大掃除日：大家一起撿垃圾' },
+      likes: 2400, veryPopular: false, behind: [] },
+
+    // ---- Pets & Funny ----
+    { id: 'fu01', topic: 'fun', creator: 'PuddlePup', avatarEmoji: '🐶', visual: '🐶🧹',
+      caption: { en: 'My dog vs. the vacuum cleaner', 'zh-TW': '我家狗狗大戰吸塵器' },
+      likes: 9000, veryPopular: true, behind: [B.sound] },
+    { id: 'fu02', topic: 'fun', creator: 'CatCrumbs', avatarEmoji: '🐱', visual: '🐱📦',
+      caption: { en: 'Cat tries to fit into a tiny box', 'zh-TW': '貓咪想擠進超小的紙箱' },
+      likes: 2700, veryPopular: false, behind: [] },
+    { id: 'fu03', topic: 'fun', creator: 'PuddlePup', avatarEmoji: '🐶', visual: '🐶🫧',
+      caption: { en: 'Puppy tries to catch a bubble', 'zh-TW': '小狗想抓住泡泡' },
+      likes: 6100, veryPopular: true, behind: [] },
+    { id: 'fu04', topic: 'fun', creator: 'CatCrumbs', avatarEmoji: '🐱', visual: '🐱🔴',
+      caption: { en: 'Cat chases the light dot for five whole minutes', 'zh-TW': '貓咪追著光點跑了整整五分鐘' },
+      likes: 3000, veryPopular: false, behind: [] },
+    { id: 'fu05', topic: 'fun', creator: 'HamsterHaha', avatarEmoji: '🐹', visual: '🐹🌻',
+      caption: { en: 'Hamster stuffs 12 sunflower seeds in its cheeks', 'zh-TW': '倉鼠的臉頰塞了 12 顆葵花籽' },
+      likes: 7700, veryPopular: true, behind: [] },
+    { id: 'fu06', topic: 'fun', creator: 'JokeJelly', avatarEmoji: '🍮', visual: '🎹❓',
+      caption: { en: 'Riddle: what has keys but can’t open doors?', 'zh-TW': '謎語：什麼東西有很多鍵，卻打不開門？' },
+      likes: 1400, veryPopular: false, behind: [] },
+    { id: 'fu07', topic: 'fun', creator: 'HamsterHaha', avatarEmoji: '🐹', visual: '🦜☀️',
+      caption: { en: 'Parrot says “good morning” every day', 'zh-TW': '鸚鵡每天都會說「早安」' },
+      likes: 4000, veryPopular: false, behind: [] },
+    { id: 'fu08', topic: 'fun', creator: 'JokeJelly', avatarEmoji: '🍮', visual: '🥞🐰',
+      caption: { en: 'A pancake that looks like a bunny', 'zh-TW': '長得像兔子的鬆餅' },
+      likes: 3600, veryPopular: false, behind: [B.edited] }
+  ];
+
+  var api = { POSTS: POSTS };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  else root.MFMM_CONTENT = api;
+})(typeof window !== 'undefined' ? window : this);
+
+</script>
+  <script>
+// ---- js/algorithm.js ----
+// algorithm.js: the "teaching model" of My Feed, My Mirror.
+// It is a SIMPLIFIED model made by students. It is NOT the real algorithm of any app.
+// Pure functions only: no DOM, no network, no storage. Works in the browser and in Node.
+(function (root) {
+  'use strict';
+
+  // ---- All the numbers live here. Change a number, and the whole feed changes. ----
+  var CONFIG = {
+    actions: {                 // how many points a topic gets when the player does this
+      watch: 3,                // 👀 stayed a few seconds
+      like: 2,                 // ❤️ liked
+      share: 3,                // 🔁 shared
+      skip: -1,                // ⏭️ scrolled past fast
+      notInterested: -4        // 🚫 "Not interested"
+    },
+    popularBonus: 1,           // extra points for a "very popular" post
+    randomMax: 0.5,            // tiny random number (0 to this) only to break ties
+    exploreEvery: 5,           // every 5th post is an "Explore pick"
+    maxTopicRun: 2,            // at most 2 posts in a row from the same topic (decision (b))
+    mixWindow: 10,             // the mix meter looks at the last 10 posts
+    challenge: {
+      actionLimit: 12,         // the player gets 12 actions
+      window: 10,              // then we look at the next 10 posts
+      maxAppearancePct: 20,    // Appearance must be 20% or less
+      minTopics: 3,            // at least 3 topics ...
+      minTopicPct: 15          // ... must have 15% or more each
+    },
+    driftedStart: {            // the Rewrite Challenge starts from a drifted feed
+      appearance: 12, hobbies: 2, learning: 0, friends: 1, fun: 0
+    }
+  };
+
+  var TOPICS = ['appearance', 'hobbies', 'learning', 'friends', 'fun'];
+  var TOPIC_LABEL = {
+    appearance: 'Appearance', hobbies: 'Sports, Music & Art',
+    learning: 'Science & Learning', friends: 'Friends & Kindness', fun: 'Pets & Funny'
+  };
+  var ACTION_VERB = {          // used in the plain-English "reasons"
+    watch: 'watched {n} {topic} post(s) for a long time',
+    like: 'liked {n} {topic} post(s)',
+    share: 'shared {n} {topic} post(s)',
+    skip: 'skipped {n} {topic} post(s)',
+    notInterested: 'said "Not interested" to {n} {topic} post(s)'
+  };
+
+  // A small seeded random generator, so tests give the same result every time.
+  function seededRandom(seed) {
+    return function () {
+      seed = (seed + 0x6D2B79F5) | 0;
+      var t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function createState(posts, options) {
+    options = options || {};
+    var scores = {}, log = {};
+    TOPICS.forEach(function (t) {
+      scores[t] = (options.scores && options.scores[t]) || 0;
+      log[t] = {};
+    });
+    return {
+      posts: posts, rng: options.rng || Math.random,
+      scores: scores,        // topic -> points
+      log: log,              // topic -> action -> how many times (for the reasons)
+      history: [],           // posts shown so far, in order
+      shownIds: {},          // posts shown in the current round
+      pickCount: 0, actionCount: 0
+    };
+  }
+
+  function createChallengeState(posts, options) {
+    options = options || {};
+    return createState(posts, { rng: options.rng, scores: CONFIG.driftedStart });
+  }
+
+  function cloneState(state) {
+    var copy = createState(state.posts, { rng: state.rng, scores: state.scores });
+    TOPICS.forEach(function (t) { copy.log[t] = Object.assign({}, state.log[t]); });
+    copy.history = state.history.slice();
+    copy.shownIds = Object.assign({}, state.shownIds);
+    copy.pickCount = state.pickCount;
+    copy.actionCount = state.actionCount;
+    return copy;
+  }
+
+  // The player did something to a post. Its topic gains or loses points.
+  function applyAction(state, action, post) {
+    if (!(action in CONFIG.actions)) throw new Error('Unknown action: ' + action);
+    var delta = CONFIG.actions[action];
+    state.scores[post.topic] += delta;
+    state.log[post.topic][action] = (state.log[post.topic][action] || 0) + 1;
+    state.actionCount += 1;
+    return delta;
+  }
+
+  function seenCount(state, topic) {
+    return state.history.filter(function (p) { return p.topic === topic; }).length;
+  }
+
+  // How many posts at the end of the history share the topic of the last post.
+  function topicRun(state) {
+    var h = state.history, n = 0;
+    while (n < h.length && h[h.length - 1 - n].topic === h[h.length - 1].topic) n++;
+    return n;
+  }
+
+  // Diversity rule: never the same creator twice in a row;
+  // never more than CONFIG.maxTopicRun posts of one topic in a row.
+  function isAllowed(state, post) {
+    var last = state.history[state.history.length - 1];
+    if (!last) return true;
+    if (post.creator === last.creator) return false;
+    if (post.topic === last.topic && topicRun(state) >= CONFIG.maxTopicRun) return false;
+    return true;
+  }
+
+  function baseScore(state, post) {
+    return state.scores[post.topic] + (post.veryPopular ? CONFIG.popularBonus : 0);
+  }
+
+  function bestOf(list) {
+    return list.reduce(function (a, b) { return b.s > a.s ? b : a; });
+  }
+
+  // Build the plain-English reasons for the chosen post.
+  function buildReasons(state, post, explored, blocked) {
+    var reasons = [];
+    if (explored) {
+      reasons.push({ code: 'explore', topic: post.topic, points: 0,
+        text: "Explore pick: you haven't seen much " + TOPIC_LABEL[post.topic] });
+    } else {
+      var log = state.log[post.topic];
+      Object.keys(CONFIG.actions).forEach(function (a) {
+        if (!log[a]) return;
+        var pts = log[a] * CONFIG.actions[a];
+        reasons.push({ code: a, topic: post.topic, n: log[a], points: pts,
+          text: 'You ' + ACTION_VERB[a].replace('{n}', log[a]).replace('{topic}', TOPIC_LABEL[post.topic]) +
+                ' (' + (pts > 0 ? '+' : '') + pts + ')' });
+      });
+      if (post.veryPopular) {
+        reasons.push({ code: 'popular', topic: post.topic, points: CONFIG.popularBonus,
+          text: 'This post is very popular (+' + CONFIG.popularBonus + ')' });
+      }
+      if (blocked) {
+        reasons.push({ code: 'diversity', topic: blocked.post.topic, kind: blocked.kind,
+          text: 'Not shown before: ' + (blocked.kind === 'creator'
+            ? 'the last post was by the same creator'
+            : 'the last posts were also ' + TOPIC_LABEL[blocked.post.topic]) + ' (diversity rule)' });
+      }
+    }
+    if (reasons.length === 0) {
+      reasons.push({ code: 'chance', topic: post.topic, points: 0,
+        text: 'Nothing you did points here yet, so it was picked by popularity and a little chance' });
+    }
+    return reasons;
+  }
+
+  // Choose the next post. Returns { post, reasons, explore }.
+  function pickNext(state) {
+    var last = state.history[state.history.length - 1];
+    var pool = state.posts.filter(function (p) { return !state.shownIds[p.id]; });
+    var allowed = pool.filter(function (p) { return isAllowed(state, p); });
+
+    if (allowed.length === 0) {   // round finished (or a dead end): start a new round
+      state.shownIds = {};
+      if (last) state.shownIds[last.id] = true;
+      pool = state.posts.filter(function (p) { return !state.shownIds[p.id]; });
+      allowed = pool.filter(function (p) { return isAllowed(state, p); });
+      if (allowed.length === 0) allowed = pool;   // last resort, should not happen
+    }
+
+    var scored = allowed.map(function (p) {
+      return { post: p, s: baseScore(state, p) + state.rng() * CONFIG.randomMax };
+    });
+
+    var chosen = null, explored = false;
+    if ((state.pickCount + 1) % CONFIG.exploreEvery === 0) {
+      // Explore slot: the topic the player has seen least (ties: lowest score).
+      var order = TOPICS.slice().sort(function (a, b) {
+        return seenCount(state, a) - seenCount(state, b) || state.scores[a] - state.scores[b];
+      });
+      for (var i = 0; i < order.length && !chosen; i++) {
+        var cands = scored.filter(function (c) { return c.post.topic === order[i]; });
+        if (cands.length) { chosen = bestOf(cands); explored = true; }
+      }
+    }
+    if (!chosen) chosen = bestOf(scored);
+
+    // Did the diversity rule hold back an even better post?
+    var blocked = null;
+    if (last && !explored) {
+      var top = pool.reduce(function (a, b) { return baseScore(state, b) > baseScore(state, a) ? b : a; });
+      if (baseScore(state, top) > baseScore(state, chosen.post) && !isAllowed(state, top)) {
+        blocked = { post: top, kind: top.creator === last.creator ? 'creator' : 'topic' };
+      }
+    }
+
+    var reasons = buildReasons(state, chosen.post, explored, blocked);
+    state.history.push(chosen.post);
+    state.shownIds[chosen.post.id] = true;
+    state.pickCount += 1;
+    return { post: chosen.post, reasons: reasons, explore: explored };
+  }
+
+  // Percent of each topic in a list of posts.
+  function mixOf(posts) {
+    var out = {};
+    TOPICS.forEach(function (t) { out[t] = 0; });
+    posts.forEach(function (p) { out[p.topic] += 100 / posts.length; });
+    return out;
+  }
+
+  // Feed mix meter: the last 10 posts shown.
+  function mix(state) {
+    return mixOf(state.history.slice(-CONFIG.mixWindow));
+  }
+
+  // Mirror Check: the topic with the most points.
+  function mirror(state) {
+    return TOPICS.reduce(function (a, b) { return state.scores[b] > state.scores[a] ? b : a; });
+  }
+
+  // Forget which posts were shown (a fresh round), but never repeat the very last one.
+  function freshRound(state) {
+    var last = state.history[state.history.length - 1];
+    state.shownIds = {};
+    if (last) state.shownIds[last.id] = true;
+  }
+
+  // Rewrite Challenge start: a feed that has ALREADY drifted. We let it show 10 posts first,
+  // so the mix meter starts "drifted", then start a fresh round so those posts can come back.
+  function startChallenge(posts, options) {
+    var s = createChallengeState(posts, options);
+    for (var i = 0; i < CONFIG.mixWindow; i++) pickNext(s);
+    freshRound(s);
+    s.actionCount = 0;
+    return s;
+  }
+
+  // Rewrite Challenge: look at the NEXT 10 posts (on a copy, so the real feed is untouched).
+  // We judge a fresh round, so only the player's NEW scores matter, not which posts are used up.
+  function evaluateChallenge(state) {
+    var c = CONFIG.challenge, sim = cloneState(state), picks = [];
+    freshRound(sim);
+    for (var i = 0; i < c.window; i++) picks.push(pickNext(sim).post);
+    var m = mixOf(picks);
+    var topicsOk = TOPICS.filter(function (t) { return m[t] >= c.minTopicPct; }).length;
+    var win = m.appearance <= c.maxAppearancePct && topicsOk >= c.minTopics &&
+              state.actionCount <= c.actionLimit;
+    var used = state.actionCount;
+    return { win: win, actions: used, mix: m, topicsOk: topicsOk,
+             code: (win ? 'WIN-' : 'TRY-') + used };
+  }
+
+  var api = {
+    CONFIG: CONFIG, TOPICS: TOPICS, TOPIC_LABEL: TOPIC_LABEL,
+    seededRandom: seededRandom, createState: createState, startChallenge: startChallenge,
+    cloneState: cloneState, applyAction: applyAction, pickNext: pickNext,
+    mix: mix, mixOf: mixOf, mirror: mirror, evaluateChallenge: evaluateChallenge
+  };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  else root.MFMM = api;
+})(typeof window !== 'undefined' ? window : this);
+
+</script>
+  <script>
+// ---- js/app.js ----
+// app.js: screens, buttons and drawing. The rules themselves live in algorithm.js.
+(function () {
+  'use strict';
+
+  var M = window.MFMM, POSTS = window.MFMM_CONTENT.POSTS, I = window.MFMM_I18N;
+  var ACTIONS = [['watch', '👀'], ['like', '❤️'], ['share', '🔁'], ['skip', '⏭️'], ['notInterested', '🚫']];
+  var $app = document.getElementById('app'), $top = document.getElementById('topbar');
+
+  // Everything the app remembers lives here, in memory only. Reload = fresh start.
+  // screen is one of: start, learn, feed, mirror, challenge, result, end
+  var S = { lang: 'en', screen: 'start', game: null, current: null, prevMix: null, result: null, card: 0 };
+
+  // The Learn cards. Facts come ONLY from the sources below (names stay in English).
+  var SRC = {
+    ig: 'Instagram, “Instagram Ranking Explained” (May 2023)',
+    tt: 'TikTok Newsroom, “How TikTok recommends videos #ForYou” (June 2020)',
+    yt: 'YouTube Help, “How YouTube recommendations work”',
+    moe: 'Taiwan Ministry of Education, K-12 Education Administration news, 26 Oct 2026, 「走進學生生活日常 深耕媒體素養教育」'
+  };
+  var LEARN = [
+    { e: '📡', src: ['ig', 'tt', 'yt'] },
+    { e: '🔮', src: ['ig'] },
+    { e: '🔁', src: ['moe'], loop: true },
+    { e: '🌈', src: ['ig', 'tt'] },
+    { e: '🎛️', src: ['ig', 'tt', 'yt'], list: 5 },
+    { e: '🕵️', src: ['moe'], detective: true }
+  ];
+
+  if (/[?&]presenter=1/.test(location.search)) document.documentElement.classList.add('presenter');
+
+  // t('key', {x: 1}) gives the text in the chosen language.
+  function t(key, p) {
+    var s = (I[S.lang] && I[S.lang][key]) || I.en[key] || key;
+    return s.replace(/\{(\w+)\}/g, function (m, k) { return p && k in p ? p[k] : m; });
+  }
+  function formatLikes(n) {
+    if (S.lang === 'zh-TW') return n >= 10000 ? (Math.round(n / 1000) / 10) + ' 萬' : String(n);
+    return n >= 1000 ? (Math.round(n / 100) / 10) + 'k' : String(n);
+  }
+  var topicName = function (id) { return t('topic.' + id); };
+
+  // Turn one reason from algorithm.js into a sentence in the chosen language.
+  function reasonText(r) {
+    var pts = (r.points > 0 ? '+' : '') + r.points;
+    if (r.code === 'explore') return t('r.explore', { topic: topicName(r.topic) });
+    if (r.code === 'popular') return t('r.popular', { pts: pts });
+    if (r.code === 'chance') return t('r.chance');
+    if (r.code === 'diversity') return t('r.div.' + r.kind, { topic: topicName(r.topic) });
+    return t('r.' + r.code, { n: r.n, posts: r.n === 1 ? 'post' : 'posts', topic: topicName(r.topic), pts: pts });
+  }
+
+  // ---- drawing ----
+  function renderTopbar() {
+    $top.innerHTML =
+      '<span class="brand">' + t('app') + '</span><div class="tools">' +
+      '<div class="seg" role="group" aria-label="' + t('lang.label') + '">' +
+      ['en', 'zh-TW'].map(function (l) {
+        return '<button data-act="lang" data-lang="' + l + '" aria-pressed="' + (S.lang === l) + '">' +
+               (l === 'en' ? 'EN' : '繁中') + '</button>';
+      }).join('') + '</div><button class="ghost" data-act="restart">' + t('btn.restart') + '</button></div>';
+  }
+
+  function renderStart() {
+    return '<section class="start"><div class="hero" aria-hidden="true">📱🪞</div><h1>' + t('app') + '</h1>' +
+      '<p class="sub">' + t('subtitle') + '</p><p>' + t('start.line1') + '</p><p>' + t('start.line2') + '</p>' +
+      '<div class="row"><button class="big alt" data-act="learn">' + t('btn.learn') + '</button>' +
+      '<button class="big" data-act="play">' + t('btn.play') + '</button></div></section>';
+  }
+
+  function renderLearn() {
+    var n = S.card + 1, c = LEARN[S.card], k = 'learn.' + n + '.', last = n === LEARN.length, a = M.CONFIG.actions, body;
+    if (c.loop) {
+      body = '<p>' + t(k + 'body') + '</p><ol class="loop">' + [1, 2, 3, 4, 5].map(function (i) {
+        return '<li style="--i:' + (i - 1) + '">' + t('loop.' + i) + '</li>';
+      }).join('') + '</ol>';
+    } else if (c.list) {
+      body = '<p>' + t(k + 'intro') + '</p><ul class="clist">' + [1, 2, 3, 4, 5].map(function (i) {
+        return '<li>' + t(k + 'i' + i) + '</li>';
+      }).join('') + '</ul>';
+    } else if (c.detective) {
+      body = '<p>' + t(k + 'intro') + '</p><ul class="qs bigq"><li>' + t('mirror.q1') + '</li><li>' + t('mirror.q2') + '</li></ul>' +
+        '<p class="habit">' + t(k + 'habit') + '</p><p>' + t(k + 'habit.body') + '</p>';
+    } else {
+      body = '<p>' + t(k + 'body') + '</p>';
+    }
+    if ((k + 'ours') in I.en) {
+      body += '<p class="ours">' + t(k + 'ours', { w: a.watch, l: a.like, s: a.share, k: a.skip, x: a.notInterested }) + '</p>';
+    }
+    return '<section class="page learn"><p class="step">' + t('learn.title') + ' · ' + t('learn.step', { n: n, total: LEARN.length }) + '</p>' +
+      '<div class="learn-card"><div class="lemoji" aria-hidden="true">' + c.e + '</div><h1>' + t(k + 'title') + '</h1>' + body +
+      '<p class="src">' + t('source.label') + ' ' + c.src.map(function (id) { return SRC[id]; }).join('; ') + '</p></div>' +
+      '<div class="dots" aria-hidden="true">' + LEARN.map(function (x, i) { return '<span class="dot' + (i === S.card ? ' on' : '') + '"></span>'; }).join('') + '</div>' +
+      '<div class="row">' + (S.card > 0 ? '<button class="ghost" data-act="back">' + t('btn.back') + '</button>' : '') +
+      (last ? '<button class="btn" data-act="toplay">' + t('btn.toplay') + '</button>'
+            : '<button class="btn" data-act="next">' + t('btn.next') + '</button>') + '</div>' +
+      '<p class="disclaimer">' + t('disclaimer') + '</p><p class="disclaimer">' + t('learn.note') + '</p></section>';
+  }
+
+  function renderBehind(p) {
+    var inner = p.behind.length
+      ? '<p>' + t('behind.intro') + '</p><ul>' + p.behind.map(function (b) { return '<li>' + b[S.lang] + '</li>'; }).join('') + '</ul>'
+      : '<p>' + t('behind.nothing') + '</p>';
+    return '<h3>' + t('link.behind') + '</h3>' + inner +
+           '<button class="ghost" data-act="flipback">' + t('behind.back') + '</button>';
+  }
+
+  // The bars slide from `from` (default: the last drawn mix) to `mix`.
+  function renderMeter(mix, from) {
+    var prev = from || S.prevMix || {};
+    return M.TOPICS.map(function (id) {
+      var pct = Math.round(mix[id]);
+      return '<div class="mrow"><span>' + topicName(id) + '</span><span class="mpct">' + pct + '%</span>' +
+        '<div class="track"><div class="fill tp-' + id + '" data-w="' + pct + '" style="width:' + Math.round(prev[id] || 0) + '%"></div></div></div>';
+    }).join('');
+  }
+
+  function renderFeed() {
+    var p = S.current.post, mix = M.mix(S.game);
+    var html =
+      '<div class="stage"><section class="phone"><div class="flip" id="flip"><div class="flip-inner">' +
+      '<div class="face front" id="front" aria-live="polite">' +
+        '<div class="head"><span class="avatar" aria-hidden="true">' + p.avatarEmoji + '</span>' + p.creator + '</div>' +
+        '<div class="visual tp-' + p.topic + '" aria-hidden="true">' + p.visual + '</div>' +
+        '<div class="caption">' + p.caption[S.lang] + '</div>' +
+        '<div class="likes">❤️ ' + t('likes', { n: formatLikes(p.likes) }) + '</div>' +
+        '<div class="links"><button class="link" data-act="why">' + t('link.why') + '</button>' +
+        '<button class="link" data-act="behind">' + t('link.behind') + '</button></div></div>' +
+      '<div class="face back" id="back" inert>' + renderBehind(p) + '</div></div></div>' +
+      '<div class="actions">' + ACTIONS.map(function (a) {
+        return '<button class="act" data-act="action" data-action="' + a[0] + '"><span class="em" aria-hidden="true">' + a[1] +
+               '</span><span class="lb">' + t('act.' + a[0]) + '</span></button>';
+      }).join('') + '</div></section>' +
+      renderSide(mix) + '</div>';
+    return { html: html, mix: mix };
+  }
+
+  // Right-hand panel: meter, counter, and the button that leads to the next screen.
+  function renderSide(mix) {
+    var n = S.game.actionCount, ch = S.screen === 'challenge', c = M.CONFIG.challenge;
+    return '<aside class="side">' +
+      (ch ? '<div class="panel goal"><h2>' + t('ch.title') + '</h2><p>' +
+            t('ch.goal', { n: c.actionLimit, a: c.maxAppearancePct, k: c.minTopics, m: c.minTopicPct }) + '</p></div>' : '') +
+      '<div class="panel"><h2>' + t('meter.title') + '</h2>' + renderMeter(mix) + '</div>' +
+      '<p class="counter">' + (ch ? t('ch.counter', { n: n, max: c.actionLimit }) : t('counter', { n: n })) + '</p>' +
+      (ch && n > 0 ? '<button class="btn" data-act="check">' + t('ch.check') + '</button>' : '') +
+      (!ch && n >= 10 ? '<button class="btn" data-act="mirror">' + t('btn.mirror') + '</button>' : '') +
+      '<p class="disclaimer">' + t('disclaimer') + '</p></aside>';
+  }
+
+  function renderMirror() {
+    var g = S.game, mix = M.mix(g), top = M.mirror(g), known = g.scores[top] > 0;
+    return '<section class="page wide"><h1>' + t('mirror.title') + '</h1><div class="mirror-grid"><div>' +
+      '<div class="mirror-frame' + (known ? ' tint-' + top : '') + '"><p>' + (known ? t('mirror.care') : t('mirror.unknown')) + '</p>' +
+      (known ? '<p class="mirror-topic">' + topicName(top) + '</p>' : '') + '</div>' +
+      '<p class="question">' + t('mirror.question') + '</p>' +
+      '<ul class="qs"><li>' + t('mirror.q1') + '</li><li>' + t('mirror.q2') + '</li></ul>' +
+      '<div class="row"><button class="btn" data-act="challenge">' + t('btn.challenge') + '</button>' +
+      '<button class="ghost" data-act="keep">' + t('btn.keep') + '</button></div></div>' +
+      '<div class="panel"><h2>' + t('meter.title') + '</h2>' + renderMeter(mix, mix) + '</div></div>' +
+      '<p class="disclaimer">' + t('mirror.source') + '</p></section>';
+  }
+
+  function renderResult() {
+    var r = S.result;
+    return '<section class="page"><h1>' + (r.win ? t('res.win', { n: r.actions }) : t('res.try')) + '</h1>' +
+      '<p class="result-label">' + t('res.code') + '</p><p class="result-code">' + r.code + '</p>' +
+      '<div class="panel"><h2>' + t('res.next') + '</h2>' + renderMeter(r.mix, r.mix) + '</div>' +
+      '<div class="row"><button class="btn" data-act="challenge">' + t('btn.again') + '</button>' +
+      '<button class="ghost" data-act="finish">' + t('btn.finish') + '</button></div></section>';
+  }
+
+  function renderEnd() {
+    return '<section class="page"><div class="hero" aria-hidden="true">🪞</div><h1>' + t('end.line') + '</h1>' +
+      '<p class="teaser">' + t('end.teaser') + '</p>' +
+      '<button class="big" data-act="restart">' + t('btn.playagain') + '</button></section>';
+  }
+
+  function render() {
+    document.documentElement.lang = S.lang;
+    document.title = t('app');
+    renderTopbar();
+    if (S.screen === 'feed' || S.screen === 'challenge') {
+      var f = renderFeed();
+      $app.innerHTML = f.html;
+      S.prevMix = f.mix;
+    } else {
+      $app.innerHTML = { start: renderStart, learn: renderLearn, mirror: renderMirror, result: renderResult, end: renderEnd }[S.screen]();
+    }
+    requestAnimationFrame(function () {   // let the bars slide to their new size
+      $app.querySelectorAll('.fill').forEach(function (el) { el.style.width = el.dataset.w + '%'; });
+    });
+  }
+
+  // ---- doing things ----
+  function goto(screen) {
+    S.screen = screen;
+    render();
+    var h = $app.querySelector('h1');   // screen readers and keyboards land on the new title
+    if (h) { h.tabIndex = -1; h.focus({ preventScroll: true }); }
+  }
+
+  function learnMove(d) {
+    var next = Math.max(0, Math.min(LEARN.length - 1, S.card + d));
+    if (next !== S.card) { S.card = next; goto('learn'); }
+  }
+
+  function startGame() {
+    S.game = M.createState(POSTS);
+    S.current = M.pickNext(S.game);
+    S.prevMix = null;
+    goto('feed');
+  }
+
+  // Rewrite Challenge: a feed that already drifted toward Appearance.
+  function startChallenge() {
+    S.game = M.startChallenge(POSTS);
+    S.current = M.pickNext(S.game);
+    S.prevMix = null;
+    goto('challenge');
+  }
+
+  function finishChallenge() {
+    S.result = M.evaluateChallenge(S.game);
+    goto('result');
+  }
+
+  function doAction(action) {
+    M.applyAction(S.game, action, S.current.post);   // 1. the topic gains or loses points
+    if (S.screen === 'challenge' && S.game.actionCount >= M.CONFIG.challenge.actionLimit) return finishChallenge();
+    S.current = M.pickNext(S.game);                   // 2. the model picks the next post
+    render();
+    $app.querySelector('.act').focus({ preventScroll: true });
+  }
+
+  function flip(on) {
+    document.getElementById('flip').classList.toggle('flipped', on);
+    document.getElementById('front').inert = on;
+    document.getElementById('back').inert = !on;
+  }
+
+  function showWhy(opener) {
+    var wrap = document.createElement('div');
+    wrap.className = 'backdrop';
+    wrap.innerHTML = '<div class="dialog" role="dialog" aria-modal="true" aria-labelledby="whyTitle">' +
+      '<h2 id="whyTitle">' + t('why.title') + '</h2><ul>' +
+      S.current.reasons.map(function (r) { return '<li>' + reasonText(r) + '</li>'; }).join('') +
+      '</ul><p class="note">' + t('why.note') + '</p><button class="ghost" data-act="closewhy">' + t('btn.close') + '</button></div>';
+    document.body.appendChild(wrap);
+    wrap.querySelector('button').focus();
+    showWhy.opener = opener;
+  }
+  function closeWhy() {
+    var w = document.querySelector('.backdrop');
+    if (w) w.remove();
+    if (showWhy.opener && document.contains(showWhy.opener)) showWhy.opener.focus();
+  }
+
+  document.addEventListener('click', function (e) {
+    if (e.target.classList.contains('backdrop')) return closeWhy();
+    var el = e.target.closest('[data-act]');
+    if (!el) return;
+    var a = el.dataset.act;
+    if (a === 'play') startGame();
+    else if (a === 'restart') { S.game = null; S.result = null; goto('start'); }
+    else if (a === 'learn') { S.card = 0; goto('learn'); }
+    else if (a === 'next') learnMove(1);
+    else if (a === 'back') learnMove(-1);
+    else if (a === 'toplay') startGame();
+    else if (a === 'mirror') goto('mirror');
+    else if (a === 'keep') goto('feed');
+    else if (a === 'challenge') startChallenge();
+    else if (a === 'check') finishChallenge();
+    else if (a === 'finish') goto('end');
+    else if (a === 'lang') { S.lang = el.dataset.lang; render(); }
+    else if (a === 'action') doAction(el.dataset.action);
+    else if (a === 'why') showWhy(el);
+    else if (a === 'closewhy') closeWhy();
+    else if (a === 'behind') { flip(true); document.querySelector('[data-act="flipback"]').focus(); }
+    else if (a === 'flipback') { flip(false); document.querySelector('[data-act="behind"]').focus(); }
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeWhy();
+    if (S.screen === 'learn' && !document.querySelector('.backdrop')) {
+      if (e.key === 'ArrowRight') learnMove(1);
+      if (e.key === 'ArrowLeft') learnMove(-1);
+    }
+  });
+
+  // Swipe a Learn card: drag left for next, right for back.
+  var swipeX = null;
+  document.addEventListener('pointerdown', function (e) { swipeX = e.target.closest('.learn-card') ? e.clientX : null; });
+  document.addEventListener('pointerup', function (e) {
+    if (swipeX === null || S.screen !== 'learn') return;
+    var dx = e.clientX - swipeX;
+    swipeX = null;
+    if (dx < -50) learnMove(1); else if (dx > 50) learnMove(-1);
+  });
+
+  render();
+})();
+
+</script>
+</body>
+</html>

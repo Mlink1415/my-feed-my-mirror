@@ -1,0 +1,158 @@
+// content.js: all the FICTIONAL posts. Nobody here is real. No photos, no real brands.
+// zh-TW draft: must be checked by our Taiwanese teammates
+//
+// Each post: id, topic, creator, avatarEmoji, visual (emoji), caption{en, zh-TW},
+// likes, veryPopular, behind[{en, zh-TW}].
+// An EMPTY behind list means "Nothing hidden: this one is just fun 🙂" (the app shows that line).
+(function (root) {
+  'use strict';
+
+  // Reusable "Behind the post" facts (only these kinds are allowed).
+  var B = {
+    filter:   { en: 'A beauty filter was switched on.', 'zh-TW': '有開美顏濾鏡。' },
+    edited:   { en: 'The picture was edited to look smoother.', 'zh-TW': '照片有修圖，看起來更平滑。' },
+    retakes:  { en: 'This is the best of many retakes.', 'zh-TW': '這是重拍很多次之後挑出來最好的一張。' },
+    light:    { en: 'Good lighting and a carefully chosen angle.', 'zh-TW': '光線很好，角度也是特別挑過的。' },
+    ad:       { en: 'Paid promotion: this post is an ad.', 'zh-TW': '付費推廣：這是一則廣告。' },
+    ai:       { en: 'The image was made by AI.', 'zh-TW': '這張圖是 AI 生成的。' },
+    cutVideo: { en: 'The boring waiting parts were cut out.', 'zh-TW': '無聊的等待時間被剪掉了。' },
+    sound:    { en: 'A funny sound effect was added.', 'zh-TW': '後來加上了搞笑音效。' },
+    tries:    { en: 'It took many tries. We only show the one that worked.', 'zh-TW': '試了很多次，這裡只放成功的那一次。' }
+  };
+
+  var POSTS = [
+    // ---- Appearance & Comparison (about half have 2-3 behind facts) ----
+    { id: 'ap01', topic: 'appearance', creator: 'LunaGlow', avatarEmoji: '🌙', visual: '🤳✨',
+      caption: { en: 'Filter selfie ✨', 'zh-TW': '濾鏡自拍 ✨' },
+      likes: 120000, veryPopular: true, behind: [B.filter, B.retakes, B.light] },
+    { id: 'ap02', topic: 'appearance', creator: 'StyleSprout', avatarEmoji: '🌱', visual: '👗🧥',
+      caption: { en: 'Outfit check (take #47)', 'zh-TW': '今日穿搭（第 47 次重拍）' },
+      likes: 85000, veryPopular: false, behind: [B.retakes, B.light] },
+    { id: 'ap03', topic: 'appearance', creator: 'GlowGarden', avatarEmoji: '🌼', visual: '🪞🌸',
+      caption: { en: 'Getting ready with me: my “natural” look 🌸', 'zh-TW': '一起準備出門：我的「自然」造型 🌸' },
+      likes: 47000, veryPopular: false, behind: [B.ad, B.retakes, B.light] },
+    { id: 'ap04', topic: 'appearance', creator: 'LunaGlow', avatarEmoji: '🌙', visual: '💇✨',
+      caption: { en: 'Perfect hair day', 'zh-TW': '完美髮型日' },
+      likes: 64000, veryPopular: true, behind: [B.light] },
+    { id: 'ap05', topic: 'appearance', creator: 'StyleSprout', avatarEmoji: '🌱', visual: '👟👟',
+      caption: { en: 'New sneakers! Who has the best pair? 👟', 'zh-TW': '新球鞋！誰的鞋子最好看？👟' },
+      likes: 40000, veryPopular: false, behind: [B.ad] },
+    { id: 'ap06', topic: 'appearance', creator: 'PoseParade', avatarEmoji: '📸', visual: '📸🌟',
+      caption: { en: 'Photo dump: my best angle 📸', 'zh-TW': '照片大放送：我最好看的角度 📸' },
+      likes: 52000, veryPopular: true, behind: [B.retakes, B.light, B.edited] },
+    { id: 'ap07', topic: 'appearance', creator: 'PoseParade', avatarEmoji: '📸', visual: '👯🎀',
+      caption: { en: 'Matching outfits with my best friend', 'zh-TW': '和好朋友穿一樣的衣服' },
+      likes: 18000, veryPopular: false, behind: [B.light] },
+    { id: 'ap08', topic: 'appearance', creator: 'GlowGarden', avatarEmoji: '🌼', visual: '🛏️💫',
+      caption: { en: 'My dream room makeover ✨', 'zh-TW': '我的夢想房間大改造 ✨' },
+      likes: 31000, veryPopular: false, behind: [B.ai, B.ad] },
+
+    // ---- Sports, Music & Art ----
+    { id: 'ho01', topic: 'hobbies', creator: 'BeatBuddy', avatarEmoji: '🥁', visual: '🥁🎶',
+      caption: { en: 'Drum practice: I kept the beat for the whole song!', 'zh-TW': '練鼓成功：整首歌我都打對拍子了！' },
+      likes: 2300, veryPopular: false, behind: [] },
+    { id: 'ho02', topic: 'hobbies', creator: 'SketchFox', avatarEmoji: '🦊', visual: '🎨🌅',
+      caption: { en: 'I painted a sunset with only three colors', 'zh-TW': '我只用三種顏色畫了一幅夕陽' },
+      likes: 4100, veryPopular: true, behind: [] },
+    { id: 'ho03', topic: 'hobbies', creator: 'BeatBuddy', avatarEmoji: '🥁', visual: '🎸🎵',
+      caption: { en: 'Learning guitar: my first three chords, G, C and D', 'zh-TW': '學吉他：我的前三個和弦，G、C 和 D' },
+      likes: 1500, veryPopular: false, behind: [] },
+    { id: 'ho04', topic: 'hobbies', creator: 'KickCloud', avatarEmoji: '⚽', visual: '⚽🥅',
+      caption: { en: 'I practiced penalty kicks every day this week', 'zh-TW': '這個星期我每天都練習罰球' },
+      likes: 3600, veryPopular: false, behind: [] },
+    { id: 'ho05', topic: 'hobbies', creator: 'SketchFox', avatarEmoji: '🦊', visual: '🐉🧱',
+      caption: { en: 'A clay dragon, made in three evenings', 'zh-TW': '黏土小龍，花了三個晚上做成' },
+      likes: 7200, veryPopular: true, behind: [] },
+    { id: 'ho06', topic: 'hobbies', creator: 'SwimSprite', avatarEmoji: '🏊', visual: '🏊💦',
+      caption: { en: 'I swam one more lap than yesterday', 'zh-TW': '我今天比昨天多游了一圈' },
+      likes: 2100, veryPopular: false, behind: [] },
+    { id: 'ho07', topic: 'hobbies', creator: 'SongSeed', avatarEmoji: '🎤', visual: '🎤🎶',
+      caption: { en: 'Our class choir is ready for the school show', 'zh-TW': '我們班的合唱團準備好表演了' },
+      likes: 4800, veryPopular: false, behind: [] },
+    { id: 'ho08', topic: 'hobbies', creator: 'KickCloud', avatarEmoji: '⚽', visual: '🛴💨',
+      caption: { en: 'Scooter trick: I tried 20 times and landed it once!', 'zh-TW': '滑板車特技：試了 20 次，成功 1 次！' },
+      likes: 5500, veryPopular: false, behind: [B.tries] },
+
+    // ---- Science & Learning ----
+    { id: 'le01', topic: 'learning', creator: 'LabLily', avatarEmoji: '🔬', visual: '🍋💡',
+      caption: { en: 'Can a lemon light up a tiny bulb? Let’s test it!', 'zh-TW': '檸檬可以點亮小燈泡嗎？一起來實驗！' },
+      likes: 6800, veryPopular: true, behind: [B.cutVideo] },
+    { id: 'le02', topic: 'learning', creator: 'NumberNinja', avatarEmoji: '🧮', visual: '🔢✖️',
+      caption: { en: 'Math trick: multiply by 11 in your head', 'zh-TW': '數學小技巧：用心算乘以 11' },
+      likes: 1900, veryPopular: false, behind: [] },
+    { id: 'le03', topic: 'learning', creator: 'LabLily', avatarEmoji: '🔬', visual: '🔦🌌',
+      caption: { en: 'Why is the sky blue? A flashlight experiment', 'zh-TW': '天空為什麼是藍色的？手電筒小實驗' },
+      likes: 5400, veryPopular: true, behind: [] },
+    { id: 'le04', topic: 'learning', creator: 'StarScout', avatarEmoji: '🔭', visual: '🔭🪐',
+      caption: { en: 'I spotted Jupiter’s moons with binoculars', 'zh-TW': '我用望遠鏡看到了木星的衛星' },
+      likes: 3100, veryPopular: false, behind: [] },
+    { id: 'le05', topic: 'learning', creator: 'NumberNinja', avatarEmoji: '🧮', visual: '🗣️📚',
+      caption: { en: 'Learn 10 new words in a new language today', 'zh-TW': '今天來學 10 個新語言的單字' },
+      likes: 2500, veryPopular: false, behind: [] },
+    { id: 'le06', topic: 'learning', creator: 'PlantPal', avatarEmoji: '🌱', visual: '🌱📓',
+      caption: { en: 'Bean sprout diary: day 1 to day 7', 'zh-TW': '豆芽日記：第 1 天到第 7 天' },
+      likes: 4300, veryPopular: false, behind: [B.cutVideo] },
+    { id: 'le07', topic: 'learning', creator: 'StarScout', avatarEmoji: '🔭', visual: '✈️📄',
+      caption: { en: 'How do planes stay up? A paper-plane test', 'zh-TW': '飛機為什麼飛得起來？紙飛機實驗' },
+      likes: 8200, veryPopular: true, behind: [] },
+    { id: 'le08', topic: 'learning', creator: 'CodeCub', avatarEmoji: '💻', visual: '💻🎲',
+      caption: { en: 'My first tiny program: a dice roller', 'zh-TW': '我的第一個小程式：擲骰子' },
+      likes: 3900, veryPopular: false, behind: [] },
+
+    // ---- Friends & Kindness (real-life kindness, links to our "Real Me Breaks") ----
+    { id: 'fr01', topic: 'friends', creator: 'KindKite', avatarEmoji: '🪁', visual: '🤝🎲',
+      caption: { en: 'I invited the new classmate to join our game at break', 'zh-TW': '下課時我邀請新同學一起玩我們的遊戲' },
+      likes: 3200, veryPopular: false, behind: [] },
+    { id: 'fr02', topic: 'friends', creator: 'TeamTiger', avatarEmoji: '🐯', visual: '🏀👏',
+      caption: { en: 'Team practice: we cheered for everyone, even after a miss', 'zh-TW': '團隊練習：就算投不進，我們也為每個人加油' },
+      likes: 5200, veryPopular: true, behind: [] },
+    { id: 'fr03', topic: 'friends', creator: 'KindKite', avatarEmoji: '🪁', visual: '📒🤒',
+      caption: { en: 'I shared my notes with a classmate who was sick', 'zh-TW': '我把筆記分享給生病請假的同學' },
+      likes: 2800, veryPopular: false, behind: [] },
+    { id: 'fr04', topic: 'friends', creator: 'HelperHen', avatarEmoji: '🐔', visual: '📦💪',
+      caption: { en: 'We carried the big box together for our teacher', 'zh-TW': '我們一起幫老師搬大箱子' },
+      likes: 1700, veryPopular: false, behind: [] },
+    { id: 'fr05', topic: 'friends', creator: 'TeamTiger', avatarEmoji: '🐯', visual: '💌🌈',
+      caption: { en: 'Our club made welcome cards for new students', 'zh-TW': '我們社團幫新同學做了歡迎卡片' },
+      likes: 4600, veryPopular: true, behind: [] },
+    { id: 'fr06', topic: 'friends', creator: 'HelperHen', avatarEmoji: '🐔', visual: '🫶😄',
+      caption: { en: 'I said sorry first after an argument, and we laughed again', 'zh-TW': '吵架後我先說了對不起，我們又一起笑了' },
+      likes: 3300, veryPopular: false, behind: [] },
+    { id: 'fr07', topic: 'friends', creator: 'InviteOwl', avatarEmoji: '🦉', visual: '🍱🪑',
+      caption: { en: 'I asked a quiet classmate to join our lunch table', 'zh-TW': '我邀請安靜的同學一起坐我們的午餐桌' },
+      likes: 5900, veryPopular: true, behind: [] },
+    { id: 'fr08', topic: 'friends', creator: 'InviteOwl', avatarEmoji: '🦉', visual: '🧤🌳',
+      caption: { en: 'Clean-up day: everyone picked up litter together', 'zh-TW': '大掃除日：大家一起撿垃圾' },
+      likes: 2400, veryPopular: false, behind: [] },
+
+    // ---- Pets & Funny ----
+    { id: 'fu01', topic: 'fun', creator: 'PuddlePup', avatarEmoji: '🐶', visual: '🐶🧹',
+      caption: { en: 'My dog vs. the vacuum cleaner', 'zh-TW': '我家狗狗大戰吸塵器' },
+      likes: 9000, veryPopular: true, behind: [B.sound] },
+    { id: 'fu02', topic: 'fun', creator: 'CatCrumbs', avatarEmoji: '🐱', visual: '🐱📦',
+      caption: { en: 'Cat tries to fit into a tiny box', 'zh-TW': '貓咪想擠進超小的紙箱' },
+      likes: 2700, veryPopular: false, behind: [] },
+    { id: 'fu03', topic: 'fun', creator: 'PuddlePup', avatarEmoji: '🐶', visual: '🐶🫧',
+      caption: { en: 'Puppy tries to catch a bubble', 'zh-TW': '小狗想抓住泡泡' },
+      likes: 6100, veryPopular: true, behind: [] },
+    { id: 'fu04', topic: 'fun', creator: 'CatCrumbs', avatarEmoji: '🐱', visual: '🐱🔴',
+      caption: { en: 'Cat chases the light dot for five whole minutes', 'zh-TW': '貓咪追著光點跑了整整五分鐘' },
+      likes: 3000, veryPopular: false, behind: [] },
+    { id: 'fu05', topic: 'fun', creator: 'HamsterHaha', avatarEmoji: '🐹', visual: '🐹🌻',
+      caption: { en: 'Hamster stuffs 12 sunflower seeds in its cheeks', 'zh-TW': '倉鼠的臉頰塞了 12 顆葵花籽' },
+      likes: 7700, veryPopular: true, behind: [] },
+    { id: 'fu06', topic: 'fun', creator: 'JokeJelly', avatarEmoji: '🍮', visual: '🎹❓',
+      caption: { en: 'Riddle: what has keys but can’t open doors?', 'zh-TW': '謎語：什麼東西有很多鍵，卻打不開門？' },
+      likes: 1400, veryPopular: false, behind: [] },
+    { id: 'fu07', topic: 'fun', creator: 'HamsterHaha', avatarEmoji: '🐹', visual: '🦜☀️',
+      caption: { en: 'Parrot says “good morning” every day', 'zh-TW': '鸚鵡每天都會說「早安」' },
+      likes: 4000, veryPopular: false, behind: [] },
+    { id: 'fu08', topic: 'fun', creator: 'JokeJelly', avatarEmoji: '🍮', visual: '🥞🐰',
+      caption: { en: 'A pancake that looks like a bunny', 'zh-TW': '長得像兔子的鬆餅' },
+      likes: 3600, veryPopular: false, behind: [B.edited] }
+  ];
+
+  var api = { POSTS: POSTS };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  else root.MFMM_CONTENT = api;
+})(typeof window !== 'undefined' ? window : this);
