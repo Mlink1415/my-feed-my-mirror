@@ -22,6 +22,8 @@ To run the tests (needs Node.js, nothing else to install):
 
 ```
 node tests/algorithm.test.js
+node tests/treehole.test.js
+node tests/i18n.test.js
 ```
 
 ## Privacy and safety (by design)
@@ -32,7 +34,22 @@ node tests/algorithm.test.js
 - Every post is **fictional**. No photos of people, no real names, creators or brands. Pictures are emoji.
 - Appearance posts stay gentle: no body size or weight, diets or insults.
 
-## The screens
+## The two features (Home screen)
+
+The app opens on a **Home** screen with two cards:
+
+1. **My Feed, My Mirror**: learn how algorithms work and how we use social media so we do not get nudged without noticing. It opens a short intro, then the lesson and game described below.
+2. **Tree Hole (心事樹洞)**: a **concept demo** of an anonymous, caring campus message box. It is made for presenters: six cards, each with a clickable **Purpose** and **How to use** box.
+   - **Scan & Share**: a poster with a demo QR (a picture only, it is not scannable) and the 5 steps: scan, write, AI check, teacher review, wall or private care.
+   - **AI Safety Check**: type or pick a message and see the result: fine (goes to a teacher), please reword, not posted, or **care route** (never posted; kind message and help channels). The check is a set of simple, visible rules in `js/treehole.js`.
+   - **The Wall**: made-up, moderated messages with kind reactions only, counselor replies and a Report button.
+   - **AI Buddy**: six pre-written answers (exam stress, sleep, puberty, friends, feeling low, bullying) that always point to a trusted adult.
+   - **Help Map**: school helpers and Taiwan hotlines 1925, 1995, 113, 1953 and emergency 110 / 119 (checked against Ministry of Health and Welfare and Ministry of Education pages in Nov 2026; please re-check before real use).
+   - **Why It Is Safe**: the 7 design rules.
+
+   Tree Hole is **not a real service**: there is no AI model, nothing is sent or saved, and the AI parts are simulated with pre-written text. A real launch would need the school's approval, a privacy review and trained counselors.
+
+## The screens of My Feed, My Mirror
 
 1. **Start**: Learn first / Play.
 2. **Learn**: 6 cards on how real recommendation systems work. Each card shows its source.
@@ -65,8 +82,9 @@ css/style.css         looks
 js/i18n.js            every word the app shows, EN + zh-TW
 js/content.js         the 40 fictional posts, EN + zh-TW
 js/algorithm.js       the teaching model (no DOM; also runs in Node)
+js/treehole.js        Tree Hole demo: safety-check rules and pre-written content (no DOM)
 js/app.js             screens, buttons, drawing
-tests/algorithm.test.js
+tests/algorithm.test.js, treehole.test.js, i18n.test.js
 RULES.md              "Our algorithm rules" (under 250 words)
 CONTENT-REVIEW.md     checklist for a teacher to review every post
 ```
